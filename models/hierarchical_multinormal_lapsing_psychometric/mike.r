@@ -49,6 +49,7 @@ install_if_missing(required_packages)
 library(tidyverse)
 library(magrittr)
 library(aria)
+library(cmdstanr)
 #renv::install_github('mike-lawrence/aria/aria')
 #remotes::install_github('mike-lawrence/aria/aria')
 #install.packages("~/Desktop/benchmark_stan_models-main/aria_0.1.0.tar", repos = NULL, type = 'source')
@@ -146,6 +147,9 @@ cmdstan_version()
 ) ->
 	dat
 
+
+
+# FIGURE THIS OUT HERE -- HOW DO CONTRASTS FIT IN?
 #compute group contrasts Xg from distinct combinations of groups
 (
 	dat
@@ -382,7 +386,7 @@ mymodel_obj <- cmdstan_model(mod_path, cpp_options = list(stan_threads = TRUE))
 # ---   The command stan call to solve with MCMC:
 post <- mymodel_obj$sample(data_for_stan, chains = 4, refresh = 1,
 						   threads_per_chain=8,
-						   output_dir = ".", validate_csv = FALSE,
+						   output_dir = ".", diagnostics = FALSE,
 						   adapt_delta=0.8)
 
 stanfit <- rstan::read_stan_csv(post$output_files())
@@ -747,7 +751,7 @@ View(post$draws()%>%
 	 	left_join(
 	 	(
 	 		Xc_with_vars%>% select(-contrasts)%>%
-	 			mutate(d
+	 			mutate(
 	 			name = paste0('[',1:n(),']')
 	 		)
 	 	)
