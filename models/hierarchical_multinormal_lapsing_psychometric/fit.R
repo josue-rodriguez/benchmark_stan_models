@@ -119,7 +119,7 @@ dat <-
 cmdstan_version()
 
 # ungroup & sort by individual
-dat <- 
+dat <-
 (
 	dat
 	# ungroup
@@ -131,7 +131,7 @@ dat <-
 	# arrange rows by individual
 	%>% arrange(individual)
 	%>% mutate(dat_row = 1:n())
-) 
+)
 
 #compute group contrasts Xg from distinct combinations of groups
 age_scaled <-
@@ -149,34 +149,14 @@ age_scaled <-
 	)
 )
 
-
-
-### FIGURE OUT WHAT'S GOING ON HERE
-Xg_with_vars <-
-(	#now add contrasts using scaled age
-	age_scaled |>
-	(\(x){
-		mutate(
-			contrasts = get_contrast_matrix_rows_as_list(
-				data = x,
-				formula = ~ age_scaled,
-				# half-sum contrasts are nice for 2-level variables bc they yield parameters whose value
-				# is the difference between conditions
-				contrast_kind = halfsum_contrasts
-			)
-	)})()
-)
-
-
-
-
+(
 age_scaled$contrasts <- get_contrast_matrix_rows_as_list(
 							data = age_scaled,
 							formula = ~ age_scaled,
 							# half-sum contrasts are nice for 2-level variables bc they yield parameters whose value
 							# is the difference between conditions
 							contrast_kind = halfsum_contrasts)
-
+)
 Xg_with_vars <- age_scaled
 
 
@@ -262,12 +242,12 @@ Xg_with_vars <- age_scaled
 	complete_Xc_with_vars
 
 # show the unique contrasts
-(
-	complete_Xc_with_vars
-	%>% select(task,setsize,condition,contains("contrasts"))
-	%>% distinct()
-	%>% View()
-)
+# (
+# 	complete_Xc_with_vars
+# 	%>% select(task,setsize,condition,contains("contrasts"))
+# 	%>% distinct()
+# 	%>% View()
+# )
 
 #subset down to just those individual-condition combos actually present in the data
 #  it"s ok if there"s no missing data and nrow(complete_Xc_with_vars)==nrow(Xc_with_vars)
@@ -304,7 +284,7 @@ Xg_with_vars <- age_scaled
 
 # package for stan & sample ----
 
-data_for_stan = lst( #lst permits later entries to refer to earlier entries
+data_for_stan <- lst( #lst permits later entries to refer to earlier entries
 
 	####
 	# Entries we need to specify ourselves
@@ -343,7 +323,7 @@ data_for_stan = lst( #lst permits later entries to refer to earlier entries
 	, intensity = dat$rw_scaled
 
 	# p_chance: probability of success @ chance for each observation
-	, p_chance = rep(.5,times=length(Y))
+	, p_chance = rep(.5, times = length(Y))
 
 	####
 	# Entries computable from the above
@@ -373,7 +353,7 @@ data_for_stan = lst( #lst permits later entries to refer to earlier entries
 glimpse(data_for_stan)
 
 #set the model path
-mod_path = "stan/hierarchical_multinormal_lapsing_psychometric.stan"
+mod_path <- "stan/hierarchical_multinormal_lapsing_psychometric.stan"
 
 #set the model centered/non-centeredness
 #  generally, if *either* nI_per_group *or* num_Y_per_q is small, non-centered will sample better than centered
@@ -383,106 +363,117 @@ data_for_stan$centered = as.numeric(data_for_stan$centered)
 
 mymodel_obj <- cmdstan_model(mod_path, cpp_options = list(stan_threads = TRUE))
 
+# fill in NAs for Xc
+data_for_stan$Xc[is.na(data_for_stan$Xc)] <- 0
+
 #not used by cmdstan set_num_threads(8)
 #---------------------------------------------
 # Now fore sampling/optimizing
 # ---   The command stan call to solve with MCMC:
 post <- mymodel_obj$sample(data_for_stan, chains = 4, refresh = 1,
-						   threads_per_chain=8,
-						   output_dir = ".", diagnostics = FALSE,
-						   adapt_delta=0.8)
+						   threads_per_chain = 8,
+						   output_dir = ".", validate_csv = FALSE,
+						   adapt_delta = 0.8)
 
 stanfit <- rstan::read_stan_csv(post$output_files())
 
 stanfit <- post$summary()
-View(summary)
-View(stanfit)
+# View(summary)
+# View(stanfit)
 #set the posterior path (automated but you could do your own if you had multiple models)
-(
-	mod_path
-	%>% fs::path_file()
-	%>% fs::path_ext_remove()
-	%>% paste0(
-		ifelse(data_for_stan$centered,"_c","_nc")
-	)
-	%>% fs::path(
-		"posteriors"
-		, .
-		, ext = "netcdf4"
-	)
-) -> post_path
+# (
+# 	mod_path
+# 	%>% fs::path_file()
+# 	%>% fs::path_ext_remove()
+# 	%>% paste0(
+# 		ifelse(data_for_stan$centered,"_c","_nc")
+# 	)
+# 	%>% fs::path(
+# 		"posteriors"
+# 		, .
+# 		, ext = "netcdf4"
+# 	)
+# ) -> post_path
 
 # ensure model is compiled
-aria:::check_and_compile(mod_path, block=T)
+# aria:::check_and_compile(mod_path, block = TRUE)
 
 # compose
-aria::compose(
-	data = data_for_stan,
-	code_path = mod_path,
-	out_path = post_path,
-	overwrite = T,
-	block = T
-)
+# aria::compose(
+# 	data = data_for_stan,
+# 	code_path = mod_path,
+# 	out_path = post_path,
+# 	overwrite = T,
+# 	block = T
+# )
 
 # check posterior diagnostics ----
-post = aria::coda(post_path)
+# post = aria::coda(post_path)
 
 # Check treedepth, divergences, & rebfmi
-(
-	post$draws(group="sample_stats")
-	%>% posterior::as_draws_df()
-	%>% group_by(.chain)
-	%>% summarise(
-		max_treedepth = max(treedepth)
-		, num_divergent = sum(divergent)
-		, rebfmi = var(energy)/(sum(diff(energy)^2)/n()) #n.b. reciprocal of typical EBFMI, so bigger=bad, like rhat
-	)
-)
+# (
+# 	post$draws(group="sample_stats")
+# 	%>% posterior::as_draws_df()
+# 	%>% group_by(.chain)
+# 	%>% summarise(
+# 		max_treedepth = max(treedepth)
+# 		, num_divergent = sum(divergent)
+# 		, rebfmi = var(energy)/(sum(diff(energy)^2)/n()) #n.b. reciprocal of typical EBFMI, so bigger=bad, like rhat
+# 	)
+# )
 
-View(post$summary()) #view all of summary
+# View(post$summary()) #view all of summary
 
-View(post$summary()%>%
-	 	posterior::as_draws_df())
+# View(post$summary()%>%
+# 	 	posterior::as_draws_df())
+#
+# post$summary()
 
-post$summary()
 
+# post$summary()%>%
+# 	posterior::as_draws_df()%>%
+# 	group_by(.chain)%>%
+# 	summarise(
+# 	max_treedepth = max(treedepth),
+# 	num_divergent = sum(divergent),
+# 	rebfmi = var(energy)/(sum(diff(energy)^2)/n()) #n.b. reciprocal of typical EBFMI, so bigger=bad, like rhat
+# )
 
-post$summary()%>%
-	posterior::as_draws_df()%>%
-	group_by(.chain)%>%
-	summarise(
-	max_treedepth = max(treedepth),
-	num_divergent = sum(divergent),
-	rebfmi = var(energy)/(sum(diff(energy)^2)/n()) #n.b. reciprocal of typical EBFMI, so bigger=bad, like rhat
-)
-
-post$summary()%>% posterior::summarise_draws(.cores=parallel::detectCores())
+par_summary <- post$summary()
 
 library(posterior)
 draws_array <- post$draws()
 str(draws_array)
 draws_df <- as_draws_df(draws_array) # as_draws_matrix() for matrix
-print(draws_df)
+head(draws_df)
 
-post$sample()
 
-View(post)
 
 str(post$sampler_diagnostics())
 diagnostics_df <- as_draws_df(post$sampler_diagnostics())
 
+diagnostics_df |>
+	summarise(
+			max_treedepth = max(treedepth__),
+			num_divergent = sum(divergent__),
+			rebfmi = var(energy__)/(sum(diff(energy__)^2)/n()) #n.b. reciprocal of typical EBFMI, so bigger=bad, like rhat
+		)
 
-# gather summary for core parameters (inc. r̂ & ess)
-(
-	post$draws(group="parameters")
-	%>% posterior::summarise_draws(.cores=parallel::detectCores())
-) ->
-	par_summary
+
+
+
+
+# # gather summary for core parameters (inc. r̂ & ess)
+# (
+# 	post$draws(group="parameters")
+# 	%>% posterior::summarise_draws(.cores=parallel::detectCores())
+# ) ->
+# 	par_summary
 
 # show the ranges of r̂/ess"s
 (
-	par_summary
-	%>% select(rhat,contains("ess"))
+	par_summary %>%
+	select(rhat,contains("ess"))
 	%>% summary()
 )
 
@@ -501,10 +492,10 @@ diagnostics_df <- as_draws_df(post$sampler_diagnostics())
 # Viz recovery of (some) non-correlation parameters ----
 
 
-str(post$draws())
+# str(post$draws())
 
-str(post$draws(variables=c("Z","iZc_sd")))%>%
-	posterior::as_draws_df()%>%
+post$draws(variables=c("Z","iZc_sd") )%>%
+	posterior::as_draws_df() %>%
 	select(-.draw)%>%
 	pivot_longer(
 	cols = -c(.chain,.iteration),
@@ -520,7 +511,7 @@ str(post$draws(variables=c("Z","iZc_sd")))%>%
 #should this be iZq or iZc
 View(str(post$draws()))
 (
-	str(post$draws(variables=c("Z","iZq_sd")))
+	post$draws(variables=c("Z","iZc_sd"))
 	%>% posterior::as_draws_df()
 	%>% select(-.draw)
 	%>% pivot_longer(
