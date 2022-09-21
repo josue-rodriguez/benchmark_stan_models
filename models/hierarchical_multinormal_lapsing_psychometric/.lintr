@@ -3,5 +3,6 @@ linters: with_defaults(
   commented_code_linter = NULL,
   no_tab_linter = NULL,
   trailing_whitespace_linter = NULL,
-  object_name_linter = NULL)
+  object_name_linter = NULL,
+  infix_spaces_operator = NULL)
 encoding: "UTF-8"

@@ -5,10 +5,12 @@ data {
   vector[N] x; // level 1 predictor
   // vector[J] x2; // level 2 predictor
   array[N] int<lower=1, upper=J> id; // person id
+
+  int<lower=1> p; // number of predictors (including intercept)
 }
 
 parameters {
-  vector[2] beta; // intercept and slope
+  vector[p ] beta; // intercept and slope
   cholesky_factor_corr[2] L_tau; // cholesky for ranefs
   matrix[2, J] z_theta;  // std. normals for ncp??
   vector<lower=0>[2] tau; // RE sd
@@ -28,7 +30,7 @@ transformed parameters{
     beta_j[, j] = beta + theta[, j];
   }
   
-}
+} 
 
 model {
   real mu;

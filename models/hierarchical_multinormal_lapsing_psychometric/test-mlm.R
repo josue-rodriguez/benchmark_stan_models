@@ -1,8 +1,9 @@
 library(lme4)
-library(cmdstanr)
+library(brms)
+library(rstan)
 library(dplyr)
 
-dat_raw <- read.csv('ace_thresholds_data.csv')
+dat_raw <- read.csv("ace_thresholds_data.csv")
 
 
 # We explored four separate performance outcome measures: 
@@ -22,11 +23,35 @@ dat <-
         consistency = 1 - cv,
         avg_rw = mean(rw),
         thresh = mean(norm)) |>
-    ungroup() |>       
-    select(pid, avg_rw, pe, consistency, thresh, rt)  
+        slice_sample(prop = 0.10) |>
+    ungroup() |>
+    select(pid, rt, timepoint, grade, acc:thresh)
+
 
 
 N <- nrow(dat)
 J <- length(unique(dat$pid))
 y <- dat$rt
 X <- model.matrix(~ avg_rw + pe + consistency + thresh, data = dat)
+
+p <- ncol(X)
+
+
+
+# bprior <- c(prior(normal(1,2), class = b, coef = pe))
+stancode <- make_stancode(
+    rt ~ avg_rw + pe + consistency + thresh + timepoint + (timepoint|pid),
+    data = dat
+)
+stancode
+
+standata <- make_standata(
+    rt ~ avg_rw + pe + consistency + thresh + timepoint + (timepoint|pid),
+    data = dat
+)
+str(standata)
+
+
+path <- 
+    "/Users/josue/GitHub/benchmark_stan_models/models/hierarchical_multinormal_lapsing_psychometric/stan_files"
+mod <- stan("stan_files/brms.stan", data = standata, chains = 4, iter = 5000)

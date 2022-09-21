@@ -1,4 +1,4 @@
-data{  // Everything that must be input by the user
+data {  // Everything that must be input by the user
   int<lower=4> n_total;                 // Total number of trials to analyze
   int<lower=2> n_subjects;              // Number of unique observers
   int<lower=2> n_levels;                // Number of levels of Factor
@@ -8,8 +8,8 @@ data{  // Everything that must be input by the user
   int<lower=0,upper=1> correct[n_total];  // Whether the response was correct (1) on each trial
   real<lower=0,upper=1> chance_performance;  // Chance performance for experiment (e.g., 1/n for n-AFC)
 }
-transformed data{
-  real<lower=0,upper=1> mean_beta;     // Mean of beta prior for individual lapse rate
+transformed data {
+  real<lower=0, upper=1> mean_beta;     // Mean of beta prior for individual lapse rate
   real<lower=0> betaEta;               // Precision parameter of beta prior for individual lapse rate
   
   // Uncomment below to allow for interaction between subject and factor
@@ -24,7 +24,7 @@ transformed data{
   mean_beta  = 0.01;
   betaEta = 100;
 }
-parameters{
+parameters {
   vector<lower=0,upper=1>[n_subjects] lapse;        // Observer's lapse rate
   real mum;
   real<lower=0> muw;
@@ -70,7 +70,7 @@ model {
       m[sj,l] = mum + factor_alpha[l] + subject_alpha[sj] + interaction_alpha[sj, l];
       w[sj,l] = exp(muw + subject_beta[sj]);
     }
-  }
+  } 
 
     for (tr in 1:n_total) {
       threshold[tr] = m[subject[tr],level[tr]];
