@@ -1,6 +1,7 @@
 library(rstan)
 library(psych)
 library(dplyr)
+library(cmdstanr)
 
 dat <- read.csv("ace_thresholds_data.csv")
 dat <- dat |> filter(timepoint == 1)
@@ -28,6 +29,17 @@ stanData <- list(
   correct = correct,
   chance_performance = chance_performance
 )
+
+
+mod <- cmdstan_model(stan_file = "thresholds_interaction.stan")
+
+
+
+fit <- mod$sample(stanData, 
+                  seed = 123, 
+                  chains = 4, 
+                  parallel_chains = 4,
+                  refresh = 500)
 
 # fit <- stan(
 #   file = "thresholds.interaction.stan",
