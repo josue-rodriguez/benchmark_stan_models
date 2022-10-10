@@ -1,40 +1,19 @@
 model {
-    // Psychometric Model
-    real pm_m[N_1,n_levels];
-    real pm_w[N_1,n_levels];
-
-    vector[N] threshold;
-    real width[N];
-
-
     
-    vector [N] psi;
-    for (sj in 1:N_1) {
-        for (l in 1:n_levels) {
-        //m[sj,l] = mum + factor_alpha[l] + subject_alpha[sj];
-        // Comment above and uncomment below for subject/factor interaction
-        pm_m[sj,l] = mum + factor_alpha[l] + subject_alpha[sj] + interaction_alpha[sj, l];
-        pm_w[sj,l] = exp(muw + subject_beta[sj]);
-        }
-    } 
 
-    for (tr in 1:N) {
-        threshold[tr] = pm_m[J_1[tr],level[tr]];
-        //width[tr] = muw;
-        width[tr] = pm_w[J_1[tr],level[tr]];
-        psi[tr] = chance_performance
-                        + (1 - lapse[J_1[tr]] - chance_performance)
-                        * inv_logit((intensity[tr] - threshold[tr])/width[tr]);
-        }
+    // Append threshold values here for feeding into MLM
+    vector[N] thresh_c = threshold - mean(threshold);
+    matrix[N, K] X2;
 
-    matrix[N, K + 1] X2;
-    X2 = append_col(Xc, threshold);
+    X2 = append_col(Xc, thresh_c);
+    
+
     target += bernoulli_lpmf(correct | psi);
 
 
 
 
-    
+
 
     // likelihood including constants
     if (!prior_only) {
@@ -52,6 +31,4 @@ model {
     // add priors to target
     target += lprior;
     target += std_normal_lpdf(to_vector(z_1));
-
-    
 }

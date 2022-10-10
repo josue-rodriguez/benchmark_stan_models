@@ -1,6 +1,9 @@
 generated quantities {
+    vector[K] means_X2;
+    means_X2 = append_row(means_X, mean(threshold));
+
     // recover actual population-level intercept
-    real b_Intercept = Intercept - dot_product(means_X, b);
+    real b_Intercept = Intercept - dot_product(means_X2, b);
 
     // compute unit-level correlations
     vector<lower=-1, upper=1>[NC_1] cor_1;

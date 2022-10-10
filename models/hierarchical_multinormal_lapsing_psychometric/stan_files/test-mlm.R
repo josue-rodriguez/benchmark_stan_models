@@ -1,6 +1,6 @@
 library(lme4)
 library(brms)
-library(rstan)
+# library(rstan)
 library(dplyr)
 library(cmdstanr)
 
@@ -34,7 +34,7 @@ dat <-
         consistency = 1 - cv,
         avg_rw = mean(rw),
         thresh = mean(norm)) |>
-        slice_sample(prop = 0.10) |>
+        # slice_sample(prop = 0.10) |>
     ungroup() |>
     select(pid, rt, timepoint, grade, acc:thresh)
 
@@ -97,23 +97,23 @@ stan_data <- c(standata, stanData)
 
 
 
-path <- 
-    c("~/GitHub/benchmark_stan_models/models/hierarchical_multinormal_lapsing_psychometric/stan_files/")
-# mod <- stan("brms.stan", data = standata, chains = 4, iter = 5000)
  
 system("~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-paths ./stan_files")
-# ~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-pa
+
+
+cmd_mod <- cmdstan_model(exe_file = "stan_files/brms", force_recompile = TRUE, include_paths = "./stan_files")
 # cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
-cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
 
 cmd_fit <- cmd_mod$sample(
   data = stan_data, 
   seed = 123, 
   chains = 4, 
   parallel_chains = 4,
-  iter_sampling = 4000,
-  refresh = 500 # print update every 500 iters
+  iter_sampling = 1000,
+  refresh = 100 # print update every 500 iters
 )
 
+summ <- cmd_fit$summary()
+summ
 # mod2 <- brm(rt ~ avg_rw + pe + consistency + thresh + timepoint + (pe|pid), data = dat, chains = 4, iter = 5000)
 # cmd_mod$include_paths()

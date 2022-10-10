@@ -1,5 +1,5 @@
 parameters {
-    vector[Kc] b; // population-level effects
+    vector[K] b; // population-level effects
     real Intercept; // temp. intercept for centered predictors
     real<lower=0> sigma; // dispersion parameter
     vector<lower=0>[M_1] sd_1; // group-level standard deviations
