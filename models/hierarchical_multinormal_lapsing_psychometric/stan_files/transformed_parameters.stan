@@ -20,29 +20,31 @@ transformed parameters {
 
     // -- Psychometric Model
     vector[n_levels] factor_alpha = append_row(fA, -sum(fA));
-    vector[n_subjects] subject_alpha = append_row(sA, -sum(sA));
-    vector[n_subjects] subject_beta = append_row(sB, -sum(sB));
+    vector[N_1] subject_alpha = append_row(sA, -sum(sA));
+    vector[N_1] subject_beta = append_row(sB, -sum(sB));
+    
+    
 
     // Uncomment below to allow for interaction between subject and factor
     //  (random slopes model)
-    matrix[n_subjects,n_levels] interaction_alpha;
-    interaction_alpha = rep_matrix(0, n_subjects, n_levels);
-    for(sj in 1:(n_subjects - 1)) {
+    matrix[N_1,n_levels] interaction_alpha;
+    interaction_alpha = rep_matrix(0, N_1, n_levels);
+    for(sj in 1:(N_1 - 1)) {
       for(l in 1:(n_levels - 1)) {
         interaction_alpha[sj, l] = fsA[(sj - 1) * (n_levels - 1) + l];
       }
       interaction_alpha[sj, n_levels] = -1 * sum(interaction_alpha[sj,]);
     }
     for (l in 1:n_levels) {
-      interaction_alpha[n_subjects,l] = -1 * sum(interaction_alpha[,l]);
+      interaction_alpha[N_1,l] = -1 * sum(interaction_alpha[,l]);
     }
 
     lprior += normal_lpdf(fA | 0, inv(sqrt(1 - inv(n_levels))));
-    lprior += normal_lpdf(sA | 0, inv(sqrt(1 - inv(n_subjects))));
-    lprior += normal_lpdf(sB | 0, inv(sqrt(1 - inv(n_subjects))));
+    lprior += normal_lpdf(sA | 0, inv(sqrt(1 - inv(N_1))));
+    lprior += normal_lpdf(sB | 0, inv(sqrt(1 - inv(N_1))));
     lprior += normal_lpdf(fsA | 0, inv(sqrt(1 - inv(n_levels_sA))));
     lprior += normal_lpdf(mum | 0, 100);
     lprior += gamma_lpdf(muw | 2, 0.5);
-    lprior += beta_lpdf(lapse_alpha, lapse_beta);
+    lprior += beta_lpdf(lapse | lapse_alpha, lapse_beta);
 
 }

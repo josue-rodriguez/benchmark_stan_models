@@ -15,13 +15,13 @@ data{
     int prior_only;  // should the likelihood be ignored?
 
     // psychometric model
-    int<lower=1> n_total; // Total number of total trials
-    int<lower=1> n_subject; // Number of unique people
+    // int<lower=1> N; // Total number of total trials
+    // int<lower=1> N_1; // Number of unique people
     int<lower=2> n_levels; // Number of levels in factor
-    real intensity[n_total]; // Intensity of trial stimulus
-    int<lower=0> subject[n_total]; // Trial-level person id
-    int<lower=0> level[n_total]; // Trial-level level id
-    int<lower=0, upper=1> correct[n_total]; // Whether trial response was correct
+    real intensity[N]; // Intensity of trial stimulus
+    // int<lower=0> subject[N]; // Trial-level person id
+    int<lower=0> level[N]; // Trial-level level id
+    int<lower=0, upper=1> correct[N]; // Whether trial response was correct
     real<lower=0, upper=1> chance_performance; // Chance performance for experiment (e.g., 1/n for n-AFC)
 }
 

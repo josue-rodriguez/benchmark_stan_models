@@ -12,6 +12,8 @@ radian_restart <- function(args = NULL) {
   os$execv(sys$executable, c("sys$executable", "-m", "radian", args))
 }
 
+
+## --- BRMS DATA ----
 dat_raw <- read.csv("ace_thresholds_data.csv")
 
 
@@ -59,19 +61,57 @@ standata <- make_standata(
 str(standata)
 
 
+## --- Psychometric DATA ----
+dat <- read.csv("ace_thresholds_data.csv")
+dat <- dat |> filter(timepoint == 1)
+
+dat$condition <- factor(dat$condition)
+dat$pid <- factor(dat$pid)
+
+global_window_rescale <- 300
+
+nTotal <- dim(dat)[1]
+nCond <- length(unique(dat$condition))
+nSubj <- length(unique(dat$pid))
+intensity <- dat$rw / global_window_rescale
+condition <- as.numeric(dat$condition)
+pid <- as.numeric(dat$pid)
+correct <- dat$correct_button == "correct"
+chance_performance <- 0.5
+stanData <- list(
+  n_total = nTotal,
+  n_levels = nCond,
+  n_subjects = nSubj,
+  subject = pid,
+  intensity = intensity,
+  level = condition,
+  correct = correct,
+  chance_performance = chance_performance
+)
+
+stan_data <- c(standata, stanData)
+
+
+
+
+
+
+
 path <- 
     c("~/GitHub/benchmark_stan_models/models/hierarchical_multinormal_lapsing_psychometric/stan_files/")
 # mod <- stan("brms.stan", data = standata, chains = 4, iter = 5000)
  
-
-# ~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-paths ./
+system("~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-paths ./stan_files")
+# ~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-pa
+# cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
 cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
 
-cmd_fit <- fit <- cmd_mod$sample(
-  data = standata, 
+cmd_fit <- cmd_mod$sample(
+  data = stan_data, 
   seed = 123, 
   chains = 4, 
   parallel_chains = 4,
+  iter_sampling = 4000,
   refresh = 500 # print update every 500 iters
 )
 

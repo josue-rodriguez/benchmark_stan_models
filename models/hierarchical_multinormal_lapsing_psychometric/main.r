@@ -31,15 +31,15 @@ stanData <- list(
 )
 
 
-mod <- cmdstan_model(stan_file = "thresholds_interaction.stan")
+# mod <- cmdstan_model(stan_file = "thresholds_interaction.stan")
 
 
 
-fit <- mod$sample(stanData, 
-                  seed = 123, 
-                  chains = 4, 
-                  parallel_chains = 4,
-                  refresh = 500)
+# fit <- mod$sample(stanData, 
+#                   seed = 123, 
+#                   chains = 4, 
+#                   parallel_chains = 4,
+#                   refresh = 500)
 
 # fit <- stan(
 #   file = "thresholds.interaction.stan",
@@ -48,7 +48,7 @@ fit <- mod$sample(stanData,
 fit <- readRDS("fit.rds")
 
 # posterior predictive
-fit_samples <- extract(fit.norm_subj.cond.t1,
+fit_samples <- extract(fit,
   c(
     "mum", "muw", "factor_alpha",
     "subject_alpha", "interaction_alpha", "subject_beta", "lapse"
@@ -178,3 +178,4 @@ legend("bottomright",
   legend = c("Group", levels(dat$pid)[plot_subj]),
   lty = 1, col = c("#000000", rainbow(nSubj)[plot_subj])
 )
+
