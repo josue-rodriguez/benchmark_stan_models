@@ -98,18 +98,18 @@ stan_data <- c(standata, stanData)
 
 
  
-system("~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-paths ./stan_files")
+# system("~/.cmdstan/cmdstan-2.30.1/bin/stanc stan_files/brms.stan --include-paths ./stan_files")
 
 
-cmd_mod <- cmdstan_model(exe_file = "stan_files/brms", force_recompile = TRUE, include_paths = "./stan_files")
-# cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
+# cmd_mod <- cmdstan_model(exe_file = "stan_files/brms", force_recompile = TRUE, include_paths = "./stan_files")
+cmd_mod <- cmdstan_model("stan_files/brms.stan", force_recompile = TRUE, include_paths = "./stan_files")
 
 cmd_fit <- cmd_mod$sample(
   data = stan_data, 
   seed = 123, 
   chains = 4, 
   parallel_chains = 4,
-  iter_sampling = 1000,
+  iter_sampling = 100,
   refresh = 100 # print update every 500 iters
 )
 
