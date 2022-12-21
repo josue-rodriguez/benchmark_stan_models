@@ -4,14 +4,6 @@ library(brms)
 library(dplyr)
 library(cmdstanr)
 
-# for restarting sessions within vscodeß
-radian_restart <- function(args = NULL) {
-  getOption("rchitect.py_tools")$attach()
-  os <- import("os")
-  sys <- import("sys")
-  os$execv(sys$executable, c("sys$executable", "-m", "radian", args))
-}
-
 
 ## --- BRMS DATA ----
 dat_raw <- read.csv("ace_thresholds_data.csv")
@@ -90,11 +82,6 @@ stanData <- list(
 )
 
 stan_data <- c(standata, stanData)
-
-
-
-
-
 
 
  
