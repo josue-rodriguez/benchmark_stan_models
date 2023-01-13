@@ -1,6 +1,5 @@
 library(lme4)
 library(brms)
-# library(rstan)
 library(dplyr)
 library(cmdstanr)
 
@@ -25,11 +24,7 @@ dat <-
         cv = sd(rt) / mean(rt),
         consistency = 1 - cv,
         avg_rw = mean(rw),
-        thresh = mean(norm)) |>
-        slice_sample(prop = 0.10) |>
-    ungroup() |>
-    select(pid, rt, timepoint, grade, acc:thresh)
-
+        thresh = mean(norm))
 
 
 N <- nrow(dat)
@@ -39,6 +34,10 @@ X <- model.matrix(~ avg_rw + pe + consistency + thresh, data = dat)
 
 p <- ncol(X)
 
+standata <- make_standata(
+    rt ~ avg_rw + pe + consistency + thresh + timepoint + (pe|pid),
+    data = dat
+)
 
 ## --- Psychometric DATA ----
 dat <- read.csv("ace_thresholds_data.csv")
@@ -71,7 +70,9 @@ stanData <- list(
 stan_data <- c(standata, stanData)
 
 
-cmd_mod <- cmdstan_model("brms.stan", force_recompile = FALSE, include_paths = "./")
+cmd_mod <- cmdstan_model("brms.stan", 
+                         force_recompile = TRUE,
+                         compile = TRUE)
 
 cmd_fit <- cmd_mod$sample(
   data = stan_data, 
